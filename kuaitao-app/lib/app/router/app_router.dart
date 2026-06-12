@@ -6,6 +6,7 @@ import '../../features/auth/register_page.dart';
 import '../../features/detail/thunder_detail_page.dart';
 import '../../features/home/home_page.dart';
 import '../../features/profile/profile_page.dart';
+import '../../features/profile/profile_edit_page.dart';
 import '../../features/publish/publish_page.dart';
 import '../../features/splash/splash_page.dart';
 
@@ -17,6 +18,7 @@ class AppRoutes {
   static const home = '/home';
   static const publish = '/publish';
   static const profile = '/profile';
+  static const profileEdit = '/profile/edit';
   static String thunderDetail(String id) => '/thunder/$id';
 }
 
@@ -53,6 +55,11 @@ GoRouter buildAppRouter() {
         path: AppRoutes.profile,
         builder: (BuildContext context, GoRouterState state) =>
             const ProfilePage(),
+      ),
+      GoRoute(
+        path: AppRoutes.profileEdit,
+        builder: (BuildContext context, GoRouterState state) =>
+            const ProfileEditPage(),
       ),
       GoRoute(
         path: '/thunder/:id',

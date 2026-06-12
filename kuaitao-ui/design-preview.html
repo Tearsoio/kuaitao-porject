@@ -1021,14 +1021,175 @@
     border-color: var(--kt-primary);
   }
 
+  /* =========================================================
+     画板 ⑦ 个人信息维护
+  ========================================================= */
+  .edit-banner {
+    background: linear-gradient(160deg, #FF3B30 0%, #FF6B35 50%, #1A1A1A 130%);
+    padding: 54px 16px 30px;
+    position: relative; overflow: hidden;
+  }
+  .edit-banner::before {
+    content: "⚡"; position: absolute; right: -30px; top: -10px;
+    font-size: 200px; color: rgba(255,214,10,0.06);
+    transform: rotate(15deg);
+  }
+  .edit-nav {
+    display: flex; align-items: center; justify-content: space-between;
+    position: relative; z-index: 2;
+  }
+  .edit-nav .back {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: rgba(255,255,255,0.35); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 700;
+  }
+  .edit-nav .title { color: #fff; font-size: 17px; font-weight: 900; }
+  .edit-nav .save-btn {
+    padding: 5px 14px; border-radius: 999px;
+    background: linear-gradient(135deg, #FF3B30, #FF6B35);
+    color: #fff; font-size: 13px; font-weight: 800;
+    box-shadow: var(--shadow-bomb);
+  }
+  .edit-avatar-wrap {
+    display: flex; flex-direction: column; align-items: center;
+    margin-top: 24px; gap: 12px;
+    position: relative; z-index: 2;
+  }
+  .edit-avatar {
+    width: 88px; height: 88px; border-radius: 50%;
+    background: linear-gradient(135deg, #FFB800, #FF6B35);
+    border: 3px solid #fff;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 32px; font-weight: 900;
+    position: relative;
+    box-shadow: 0 6px 20px rgba(255,59,48,0.4);
+  }
+  .edit-avatar .cam {
+    position: absolute; right: -4px; bottom: -4px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--kt-primary); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; border: 2px solid #fff;
+  }
+  /* 头像下方小徽章: 已助 X 人避雷 */
+  .saved-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 12px 5px 6px; border-radius: 999px;
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.4);
+    color: #fff; font-size: 11px; font-weight: 700;
+    backdrop-filter: blur(6px);
+  }
+  .saved-badge .shield-ico {
+    width: 18px; height: 18px;
+    display: inline-flex; align-items: center; justify-content: center;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.25));
+  }
+  .saved-badge .num { color: var(--kt-warning); font-weight: 900; }
+
+  /* 编辑页表单卡片 */
+  .edit-card {
+    margin: -16px 14px 0;
+    background: #fff; border-radius: 16px;
+    box-shadow: var(--shadow-card);
+    position: relative; z-index: 5;
+    overflow: hidden;
+  }
+  .edit-row {
+    display: flex; align-items: center;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--kt-border);
+    font-size: 14px;
+  }
+  .edit-row:last-child { border-bottom: none; }
+  .edit-row .icon { font-size: 18px; margin-right: 12px; }
+  .edit-row .lbl {
+    font-weight: 700; width: 72px; flex-shrink: 0;
+    color: var(--kt-text-1);
+  }
+  .edit-row .val {
+    flex: 1; color: var(--kt-text-2); font-size: 14px;
+  }
+  .edit-row .val.placeholder { color: var(--kt-text-3); }
+  .edit-row .val .editable {
+    border: none; outline: none; background: transparent;
+    font-size: 14px; color: var(--kt-text-1); font-weight: 700;
+    width: 100%;
+  }
+  .edit-row .arrow { color: var(--kt-text-3); font-size: 14px; margin-left: 6px; }
+  .edit-row .level-badge {
+    display: inline-flex; align-items: center; gap: 3px;
+    background: linear-gradient(135deg, #FFE066, #FFB800);
+    padding: 2px 8px; border-radius: 999px;
+    font-size: 11px; font-weight: 900; color: var(--kt-dark);
+  }
+  .edit-row .modify-link {
+    color: var(--kt-primary); font-size: 13px; font-weight: 700;
+    margin-left: 8px;
+  }
+
+  /* 编辑页兴趣卡片 */
+  .edit-interest-card {
+    margin: 14px 14px 0;
+    background: #fff; border-radius: 16px;
+    padding: 16px; box-shadow: var(--shadow-card);
+  }
+  .edit-interest-card .lbl {
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 14px; font-weight: 800; margin-bottom: 12px;
+  }
+  .edit-interest-card .lbl small { color: var(--kt-text-3); font-size: 11px; font-weight: 500; }
+  .edit-interest-card .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .edit-interest-chip {
+    padding: 6px 12px; border-radius: 999px;
+    font-size: 12px; font-weight: 600;
+    border: 1px solid var(--kt-border);
+    background: var(--kt-bg); color: var(--kt-text-2);
+  }
+  .edit-interest-chip.active {
+    background: var(--kt-primary); color: #fff;
+    border-color: var(--kt-primary);
+  }
+
+  /* 编辑页勋章展示 */
+  .edit-medal {
+    margin: 14px 14px 0;
+    background: linear-gradient(135deg, #FFE066 0%, #FFB800 100%);
+    border-radius: 16px; padding: 16px;
+    display: flex; align-items: center; gap: 14px;
+    border: 3px solid var(--kt-dark);
+    box-shadow: 4px 4px 0 var(--kt-dark);
+  }
+  .edit-medal .shield { font-size: 36px; }
+  .edit-medal .num {
+    font-size: 24px; font-weight: 900; color: var(--kt-primary);
+    -webkit-text-stroke: 1px var(--kt-dark); line-height: 1;
+  }
+  .edit-medal .label {
+    font-size: 12px; font-weight: 800; color: var(--kt-dark); margin-top: 4px;
+  }
+
+  /* 退出登录按钮 */
+  .logout-btn {
+    margin: 24px 14px 40px;
+    padding: 14px; text-align: center;
+    background: var(--kt-primary-light);
+    border: 1.5px solid var(--kt-primary);
+    border-radius: 14px;
+    color: var(--kt-primary);
+    font-size: 15px; font-weight: 900;
+    letter-spacing: 2px;
+  }
+
 </style>
 </head>
 <body>
 
 <div class="preview-header">
   <h1>⚡ 快逃 · 避雷 App UI 设计稿</h1>
-  <p>炸裂吐槽风 · 7 页完整业务流 · iPhone 14 Pro (393×852)</p>
-  <p class="meta">启动加载　→　登录　→　注册　→　首页雷区广场　·　雷帖详情　·　发布避雷帖　·　个人中心</p>
+  <p>炸裂吐槽风 · 8 页完整业务流 · iPhone 14 Pro (393×852)</p>
+  <p class="meta">启动加载　→　登录　→　注册　→　首页雷区广场　·　雷帖详情　·　发布避雷帖　·　个人中心　→　个人信息维护</p>
   <div class="flow-diagram">
     <span class="flow-node start">⓪ Splash</span>
     <span class="flow-arrow">→</span>
@@ -1043,6 +1204,8 @@
     <span class="flow-node">⑤ 发布避雷帖</span>
     <span class="flow-arrow">↑</span>
     <span class="flow-node">⑥ 个人中心</span>
+    <span class="flow-arrow">⚙→</span>
+    <span class="flow-node">⑦ 个人信息维护</span>
   </div>
 </div>
 
@@ -1847,6 +2010,113 @@
           <div class="tab-publish">+</div>
           <div class="tab-item active"><div class="ico">👤</div>我的</div>
         </div>
+        <div class="home-indicator"></div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============================================================
+       画板 ⑦ 个人信息维护
+  ============================================================ -->
+  <div class="phone-wrap">
+    <div class="phone-label">⑦ 个人信息维护</div>
+    <div class="phone">
+      <div class="screen">
+        <div class="dynamic-island"></div>
+        <div class="status-bar on-dark">
+          <span>9:41</span>
+          <div class="icons">
+            <span>●●●●</span><span>📶</span><span>🔋</span>
+          </div>
+        </div>
+
+        <div class="scroll-area" style="padding-top: 0;">
+          <!-- 顶部渐变 -->
+          <div class="edit-banner">
+            <div class="edit-nav">
+              <div class="back">←</div>
+              <div class="title">个人信息</div>
+              <div class="save-btn">保存</div>
+            </div>
+            <div class="edit-avatar-wrap">
+              <div class="edit-avatar">
+                明
+                <div class="cam">📷</div>
+              </div>
+              <div class="saved-badge">
+                <span class="shield-ico">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                      <linearGradient id="sgrad1" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#FFD60A"/>
+                        <stop offset="100%" stop-color="#FF6B35"/>
+                      </linearGradient>
+                    </defs>
+                    <path d="M12 2.2 L20 5 V11.5 C20 16.4 16.6 20.4 12 21.8 C7.4 20.4 4 16.4 4 11.5 V5 L12 2.2 Z"
+                          fill="url(#sgrad1)" stroke="#1A1A1A" stroke-width="1.4" stroke-linejoin="round"/>
+                    <path d="M13 7 L8.5 13.2 H11.6 L10.6 17.5 L15.2 11.2 H12.2 L13 7 Z"
+                          fill="#1A1A1A"/>
+                  </svg>
+                </span>
+                <span>已助 <span class="num">1,234</span> 人避雷</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 表单卡片 -->
+          <div class="edit-card">
+            <div class="edit-row">
+              <span class="icon">👤</span>
+              <span class="lbl">避雷代号</span>
+              <span class="val"><input class="editable" value="小明被坑日记" /></span>
+              <span class="arrow">›</span>
+            </div>
+            <div class="edit-row">
+              <span class="icon">🛡</span>
+              <span class="lbl">避雷等级</span>
+              <span class="val"><span class="level-badge">🛡 Lv.5 避雷侠</span></span>
+            </div>
+            <div class="edit-row">
+              <span class="icon">📱</span>
+              <span class="lbl">手机号</span>
+              <span class="val">138 **** 6688</span>
+              <span class="arrow">›</span>
+            </div>
+            <div class="edit-row">
+              <span class="icon">🗝</span>
+              <span class="lbl">登录密码</span>
+              <span class="val">••••••••</span>
+              <span class="modify-link">修改</span>
+            </div>
+            <div class="edit-row">
+              <span class="icon">📝</span>
+              <span class="lbl">个人简介</span>
+              <span class="val"><input class="editable" value="专业避雷20年，踩过的坑比走过的路还多" /></span>
+              <span class="arrow">›</span>
+            </div>
+          </div>
+
+          <!-- 兴趣标签 -->
+          <div class="edit-interest-card">
+            <div class="lbl">
+              <span>🎯 你最想避哪些雷？</span>
+              <small>已选 3 / 至少 1 个</small>
+            </div>
+            <div class="chips">
+              <span class="edit-interest-chip active">🏔 景点</span>
+              <span class="edit-interest-chip active">🍜 美食</span>
+              <span class="edit-interest-chip">📱 数码</span>
+              <span class="edit-interest-chip">🛎 服务</span>
+              <span class="edit-interest-chip active">💄 美妆</span>
+              <span class="edit-interest-chip">🏨 酒店</span>
+            </div>
+          </div>
+
+          <!-- 退出登录 -->
+          <div class="logout-btn">退出登录</div>
+        </div>
+
         <div class="home-indicator"></div>
       </div>
     </div>

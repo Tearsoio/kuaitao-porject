@@ -164,6 +164,9 @@ class MockData {
     postCount: 23,
     favoriteCount: 56,
     likes: '1.2k',
+    phone: '138****6688',
+    bio: '专业避雷 20 年，踩过的坑比走过的路还多',
+    interests: <String>['🏔 景点', '🍜 美食', '💄 美妆'],
   );
 
   /// 个人中心瀑布流（设计稿 4 张）

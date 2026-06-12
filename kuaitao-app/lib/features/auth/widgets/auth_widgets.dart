@@ -232,7 +232,8 @@ class AuthSubmitBtn extends StatelessWidget {
         transform: Matrix4.skewX(-2 * 3.14159 / 180),
         alignment: Alignment.center,
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 14),
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             gradient: KtGradients.brand,
             borderRadius: BorderRadius.circular(KtRadius.lg),
@@ -251,7 +252,7 @@ class AuthSubmitBtn extends StatelessWidget {
                 ),
               ),
               const Positioned(
-                right: 16,
+                right: 2,
                 child: Text(
                   '⚡',
                   style: TextStyle(fontSize: 18, color: KtColors.warning),

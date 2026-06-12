@@ -31,7 +31,7 @@ class _LoginPageState extends State<LoginPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 70),
                   const AuthMiniLogo(),
                   const SizedBox(height: 28),
                   RichText(
@@ -57,12 +57,12 @@ class _LoginPageState extends State<LoginPage> {
                     '登录后可发帖、收藏、查看个人雷库',
                     style: TextStyle(color: KtColors.text3, fontSize: 13, height: 1.6),
                   ),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 54),
                   _LoginTabs(
                     index: _tab,
                     onChange: (int i) => setState(() => _tab = i),
                   ),
-                  const SizedBox(height: 22),
+                  const SizedBox(height: 30),
                   if (_tab == 0) ...<Widget>[
                     const AuthTextField(
                       leading: '📱',

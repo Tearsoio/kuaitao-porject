@@ -63,6 +63,9 @@ class UserProfile {
   final int postCount;
   final int favoriteCount;
   final String likes;
+  final String? phone;
+  final String? bio;
+  final List<String> interests;
 
   const UserProfile({
     required this.nickname,
@@ -72,5 +75,34 @@ class UserProfile {
     required this.postCount,
     required this.favoriteCount,
     required this.likes,
+    this.phone,
+    this.bio,
+    this.interests = const <String>[],
   });
+
+  UserProfile copyWith({
+    String? nickname,
+    String? avatarChar,
+    int? level,
+    int? savedCount,
+    int? postCount,
+    int? favoriteCount,
+    String? likes,
+    String? phone,
+    String? bio,
+    List<String>? interests,
+  }) {
+    return UserProfile(
+      nickname: nickname ?? this.nickname,
+      avatarChar: avatarChar ?? this.avatarChar,
+      level: level ?? this.level,
+      savedCount: savedCount ?? this.savedCount,
+      postCount: postCount ?? this.postCount,
+      favoriteCount: favoriteCount ?? this.favoriteCount,
+      likes: likes ?? this.likes,
+      phone: phone ?? this.phone,
+      bio: bio ?? this.bio,
+      interests: interests ?? this.interests,
+    );
+  }
 }

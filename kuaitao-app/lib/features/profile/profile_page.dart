@@ -30,19 +30,7 @@ class _ProfilePageState extends State<ProfilePage> {
         children: <Widget>[
           CustomScrollView(
             slivers: <Widget>[
-              SliverToBoxAdapter(child: _Banner(user: u)),
-              SliverToBoxAdapter(
-                child: Transform.translate(
-                  offset: const Offset(0, -50),
-                  child: _SaveMedal(savedCount: u.savedCount),
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: Transform.translate(
-                  offset: const Offset(0, -38),
-                  child: _StatsRow(user: u),
-                ),
-              ),
+              SliverToBoxAdapter(child: _ProfileHeader(user: u)),
               SliverToBoxAdapter(
                 child: _ProfileTabs(
                   index: _tab,
@@ -50,7 +38,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ),
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(10, 0, 10, 110),
+                padding: const EdgeInsets.fromLTRB(10, 8, 10, 110),
                 sliver: SliverMasonryGrid.count(
                   crossAxisCount: 2,
                   mainAxisSpacing: 10,
@@ -78,113 +66,130 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 }
 
-class _Banner extends StatelessWidget {
+/// 头部: Banner + 勋章 + 数据条
+///
+/// 设计稿:
+///   profile-banner: padding 60px 16px 70px, 渐变背景
+///   save-medal: margin -50px 14px 0 (上移50px覆盖banner)
+///   stats-row: margin 14px
+///
+/// 实际视觉效果:
+///   Banner内容 → 20px间距 → 勋章(浮在渐变上) → 14px间距 → 数据条
+///
+/// 实现方式:
+///   DecoratedBox 提供渐变背景, 从顶部延伸到勋章底部
+///   内部 Column: 内容(20px bottom) + 勋章
+///   stats-row 在渐变区域之外
+class _ProfileHeader extends StatelessWidget {
   final UserProfile user;
-  const _Banner({required this.user});
+  const _ProfileHeader({required this.user});
 
   @override
   Widget build(BuildContext context) {
     final double topPad = MediaQuery.of(context).padding.top + 12;
-    return Container(
-      padding: EdgeInsets.fromLTRB(16, topPad, 16, 70),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment(-0.4, -1),
-          end: Alignment(0.4, 1),
-          colors: <Color>[KtColors.primary, KtColors.bomb, KtColors.dark],
-          stops: <double>[0, 0.5, 1.0],
-        ),
-      ),
-      child: Stack(
-        clipBehavior: Clip.hardEdge,
-        children: <Widget>[
-          Positioned(
-            right: -10,
-            top: 18,
-            child: Transform.rotate(
-              angle: -10 * 3.14159 / 180,
-              child: const Text(
-                '避雷侠',
-                style: TextStyle(
-                  fontSize: 90,
-                  fontWeight: FontWeight.w900,
-                  color: Color(0x14FFFFFF),
-                  letterSpacing: 2,
-                  height: 1,
-                ),
-              ),
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        // 渐变背景区域: Banner内容 + 勋章(覆盖在渐变上)
+        DecoratedBox(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment(-0.4, -1),
+              end: Alignment(0.4, 1),
+              colors: <Color>[KtColors.primary, KtColors.bomb, KtColors.dark],
+              stops: <double>[0, 0.5, 1.0],
             ),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              const Align(
-                alignment: Alignment.centerRight,
-                child: Text('⚙',
-                    style: TextStyle(
-                        color: Color(0xCCFFFFFF), fontSize: 20)),
-              ),
-              const SizedBox(height: 18),
-              Row(
-                children: <Widget>[
-                  Container(
-                    width: 64,
-                    height: 64,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: const LinearGradient(colors: <Color>[
-                        KtColors.warningDeep,
-                        KtColors.bomb,
-                      ]),
-                      border: Border.all(color: Colors.white, width: 3),
-                    ),
-                    child: Text(
-                      user.avatarChar,
-                      style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.w900),
-                    ),
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(16, topPad, 16, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                // 设置图标 — 用 IconButton 替代 GestureDetector+Text 确保点击可靠
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: IconButton(
+                    onPressed: () => context.push(AppRoutes.profileEdit),
+                    icon: const Icon(Icons.settings, color: Color(0xCCFFFFFF), size: 22),
+                    padding: const EdgeInsets.all(8),
+                    constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+                    splashRadius: 20,
                   ),
-                  const SizedBox(width: 14),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text(user.nickname,
-                          style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 22,
-                              fontWeight: FontWeight.w900)),
-                      const SizedBox(height: 4),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: KtColors.warning,
-                          borderRadius: BorderRadius.circular(KtRadius.pill),
-                        ),
-                        child: Text(
-                          '🛡 Lv.${user.level} 避雷侠',
-                          style: const TextStyle(
-                            color: KtColors.dark,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 11,
+                ),
+                const SizedBox(height: 18),
+                // 用户信息
+                Row(
+                  children: <Widget>[
+                    Container(
+                      width: 64,
+                      height: 64,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: const LinearGradient(colors: <Color>[
+                          KtColors.warningDeep,
+                          KtColors.bomb,
+                        ]),
+                        border: Border.all(color: Colors.white, width: 3),
+                      ),
+                      child: Text(
+                        user.avatarChar,
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w900),
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(user.nickname,
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 22,
+                                fontWeight: FontWeight.w900)),
+                        const SizedBox(height: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: KtColors.warning,
+                            borderRadius: BorderRadius.circular(KtRadius.pill),
+                          ),
+                          child: Text(
+                            '🛡 Lv.${user.level} 避雷侠',
+                            style: const TextStyle(
+                              color: KtColors.dark,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 11,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ],
+                      ],
+                    ),
+                  ],
+                ),
+                // Banner内容到勋章: 设计稿 70-50=20px
+                const SizedBox(height: 20),
+                // 勋章 (浮在渐变背景上)
+                _SaveMedal(savedCount: user.savedCount),
+              ],
+            ),
           ),
-        ],
-      ),
+        ),
+        // 数据条 (设计稿 margin: 14px)
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          child: _StatsRow(user: user),
+        ),
+      ],
     );
   }
 }
 
+/// 已救助勋章
 class _SaveMedal extends StatelessWidget {
   final int savedCount;
   const _SaveMedal({required this.savedCount});
@@ -192,7 +197,6 @@ class _SaveMedal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 14),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
@@ -253,6 +257,7 @@ class _SaveMedal extends StatelessWidget {
   }
 }
 
+/// 数据条
 class _StatsRow extends StatelessWidget {
   final UserProfile user;
   const _StatsRow({required this.user});
@@ -260,7 +265,7 @@ class _StatsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 14),
+      margin: const EdgeInsets.only(top: 14),
       padding: const EdgeInsets.symmetric(vertical: 14),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -271,9 +276,9 @@ class _StatsRow extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: <Widget>[
           _Cell(value: '${user.postCount}', label: '发布雷帖'),
-          const _Divider(),
+          const _VDivider(),
           _Cell(value: '${user.favoriteCount}', label: '收藏'),
-          const _Divider(),
+          const _VDivider(),
           _Cell(value: user.likes, label: '被赞'),
         ],
       ),
@@ -292,8 +297,7 @@ class _Cell extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         Text(value,
-            style: const TextStyle(
-                fontSize: 18, fontWeight: FontWeight.w900)),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
         const SizedBox(height: 2),
         Text(label,
             style: const TextStyle(fontSize: 11, color: KtColors.text3)),
@@ -302,14 +306,15 @@ class _Cell extends StatelessWidget {
   }
 }
 
-class _Divider extends StatelessWidget {
-  const _Divider();
+class _VDivider extends StatelessWidget {
+  const _VDivider();
   @override
   Widget build(BuildContext context) {
     return Container(width: 1, height: 24, color: KtColors.border);
   }
 }
 
+/// Tab
 class _ProfileTabs extends StatelessWidget {
   final int index;
   final ValueChanged<int> onChange;
@@ -319,49 +324,45 @@ class _ProfileTabs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Transform.translate(
-      offset: const Offset(0, -30),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14),
-        margin: const EdgeInsets.only(bottom: 8),
-        decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: KtColors.border)),
-        ),
-        child: Row(
-          children: List<Widget>.generate(_titles.length, (int i) {
-            final bool active = i == index;
-            return GestureDetector(
-              onTap: () => onChange(i),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
-                child: Stack(
-                  alignment: Alignment.bottomCenter,
-                  clipBehavior: Clip.none,
-                  children: <Widget>[
-                    Text(_titles[i],
-                        style: TextStyle(
-                          color: active ? KtColors.text1 : KtColors.text3,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                        )),
-                    if (active)
-                      Positioned(
-                        bottom: -10,
-                        child: Container(
-                          width: 24,
-                          height: 3,
-                          decoration: BoxDecoration(
-                            color: KtColors.primary,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: KtColors.border)),
+      ),
+      child: Row(
+        children: List<Widget>.generate(_titles.length, (int i) {
+          final bool active = i == index;
+          return GestureDetector(
+            onTap: () => onChange(i),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+              child: Stack(
+                alignment: Alignment.bottomCenter,
+                clipBehavior: Clip.none,
+                children: <Widget>[
+                  Text(_titles[i],
+                      style: TextStyle(
+                        color: active ? KtColors.text1 : KtColors.text3,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      )),
+                  if (active)
+                    Positioned(
+                      bottom: -11,
+                      child: Container(
+                        width: 24,
+                        height: 3,
+                        decoration: BoxDecoration(
+                          color: KtColors.primary,
+                          borderRadius: BorderRadius.circular(2),
                         ),
                       ),
-                  ],
-                ),
+                    ),
+                ],
               ),
-            );
-          }),
-        ),
+            ),
+          );
+        }),
       ),
     );
   }
