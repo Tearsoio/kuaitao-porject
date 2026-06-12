@@ -1,0 +1,1858 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>「快逃」避雷 App · UI 高保真设计稿</title>
+<style>
+  /* ===== 设计 Token ===== */
+  :root {
+    --kt-primary: #FF3B30;
+    --kt-primary-hover: #FF1F12;
+    --kt-primary-light: #FFE5E3;
+    --kt-warning: #FFD60A;
+    --kt-warning-deep: #FFB800;
+    --kt-bomb: #FF6B35;
+    --kt-electric: #00E5FF;
+    --kt-bg: #FAFAFA;
+    --kt-card: #FFFFFF;
+    --kt-dark: #1A1A1A;
+    --kt-text-1: #1A1A1A;
+    --kt-text-2: #4A4A4A;
+    --kt-text-3: #8C8C8C;
+    --kt-border: #EBEBEB;
+    --kt-canvas: #E8E8E8;
+    --shadow-card: 0 4px 12px rgba(0,0,0,0.06);
+    --shadow-bomb: 0 4px 16px rgba(255,59,48,0.25);
+    --shadow-phone: 0 30px 60px rgba(0,0,0,0.18), 0 10px 24px rgba(0,0,0,0.12);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { background: var(--kt-canvas); font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif; color: var(--kt-text-1); }
+  body { padding: 60px 80px; overflow-x: auto; }
+
+  /* ===== 顶部说明 ===== */
+  .preview-header { max-width: 1820px; margin: 0 auto 40px; text-align: center; }
+  .preview-header h1 {
+    font-size: 42px; font-weight: 900; letter-spacing: 2px;
+    background: linear-gradient(135deg, #FF3B30 0%, #FFB800 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    display: inline-block; transform: skewX(-6deg);
+  }
+  .preview-header p { color: var(--kt-text-2); margin-top: 12px; font-size: 16px; }
+  .preview-header .meta { margin-top: 8px; color: var(--kt-text-3); font-size: 13px; }
+  .flow-diagram {
+    margin: 20px auto 0; max-width: 1100px;
+    display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px;
+    font-size: 12px; font-weight: 700;
+  }
+  .flow-node {
+    padding: 6px 14px; border-radius: 999px;
+    background: #fff; color: var(--kt-text-1);
+    border: 1.5px solid var(--kt-border);
+    box-shadow: var(--shadow-card);
+  }
+  .flow-node.start { background: var(--kt-dark); color: var(--kt-warning); border-color: var(--kt-dark); }
+  .flow-node.core { background: var(--kt-primary); color: #fff; border-color: var(--kt-primary); }
+  .flow-arrow { color: var(--kt-text-3); font-size: 14px; }
+
+  /* ===== 画板容器 ===== */
+  .canvas-row { display: flex; gap: 60px; justify-content: flex-start; align-items: flex-start; }
+
+  .phone-wrap { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+  .phone-label {
+    margin-bottom: 16px; padding: 6px 18px;
+    background: var(--kt-dark); color: #fff; border-radius: 999px;
+    font-size: 13px; font-weight: 700; letter-spacing: 1px;
+  }
+
+  /* iPhone 14 Pro 模拟 */
+  .phone {
+    width: 393px; height: 852px;
+    background: #000;
+    border-radius: 54px;
+    padding: 12px;
+    box-shadow: var(--shadow-phone);
+    position: relative;
+  }
+  .screen {
+    width: 100%; height: 100%;
+    background: var(--kt-bg);
+    border-radius: 44px;
+    overflow: hidden;
+    position: relative;
+    display: flex; flex-direction: column;
+  }
+  /* 动态岛 */
+  .dynamic-island {
+    position: absolute; top: 11px; left: 50%; transform: translateX(-50%);
+    width: 120px; height: 36px; background: #000; border-radius: 18px; z-index: 100;
+  }
+  /* 状态栏 */
+  .status-bar {
+    height: 54px; padding: 18px 30px 0; display: flex; justify-content: space-between; align-items: center;
+    font-size: 15px; font-weight: 600; color: var(--kt-text-1); flex-shrink: 0;
+    position: relative; z-index: 10;
+  }
+  .status-bar.on-dark { color: #fff; }
+  .status-bar .icons { display: flex; gap: 5px; align-items: center; font-size: 13px; }
+
+  /* 内容区滚动 */
+  .scroll-area { flex: 1; overflow-y: auto; overflow-x: hidden; }
+  .scroll-area::-webkit-scrollbar { display: none; }
+
+  /* ===== 通用组件 ===== */
+  .tag {
+    display: inline-flex; align-items: center; gap: 3px;
+    padding: 3px 8px; border-radius: 999px;
+    font-size: 11px; font-weight: 700;
+    background: var(--kt-primary-light); color: var(--kt-primary);
+  }
+  .tag.yellow { background: #FFF8C5; color: #B07A00; }
+  .tag.dark { background: var(--kt-dark); color: var(--kt-warning); }
+
+  /* ===== 公共：底部 Tab Bar ===== */
+  .tabbar {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 84px;
+    background: rgba(255,255,255,0.96);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid var(--kt-border);
+    display: flex; justify-content: space-around; align-items: center;
+    padding-bottom: 18px; z-index: 50;
+  }
+  .tab-item {
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    color: var(--kt-text-3); font-size: 11px; font-weight: 600;
+    width: 80px; cursor: pointer;
+  }
+  .tab-item.active { color: var(--kt-primary); }
+  .tab-item .ico { font-size: 22px; }
+  .tab-publish {
+    width: 60px; height: 60px;
+    background: linear-gradient(135deg, #FF3B30 0%, #FF6B35 100%);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 32px; font-weight: 300;
+    margin-top: -28px; box-shadow: var(--shadow-bomb);
+    position: relative;
+    animation: pulseRed 2.4s ease-out infinite;
+  }
+  @keyframes pulseRed {
+    0% { box-shadow: 0 0 0 0 rgba(255,59,48,0.6); }
+    70% { box-shadow: 0 0 0 14px rgba(255,59,48,0); }
+    100% { box-shadow: 0 0 0 0 rgba(255,59,48,0); }
+  }
+
+  /* =========================================================
+     画板 ① 首页 - 雷区广场
+  ========================================================= */
+  /* 顶部 Header */
+  .home-header {
+    background: linear-gradient(160deg, #FF3B30 0%, #FF6B35 60%, #FFB800 130%);
+    padding: 0 16px 16px;
+    position: relative;
+  }
+  .home-header::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: -20px; height: 24px;
+    background: var(--kt-bg);
+    border-radius: 24px 24px 0 0;
+  }
+  .home-logo-row { display: flex; align-items: center; justify-content: space-between; padding: 6px 0 14px; }
+  .logo {
+    font-size: 32px; font-weight: 900; letter-spacing: -1px;
+    color: #fff; transform: skewX(-8deg);
+    text-shadow: 3px 3px 0 var(--kt-dark);
+    display: flex; align-items: center; gap: 4px;
+  }
+  .logo .spark { font-size: 26px; -webkit-text-fill-color: var(--kt-warning); text-shadow: none; }
+  .header-icon { color: #fff; font-size: 22px; padding: 6px; }
+
+  .search-bar {
+    background: rgba(255,255,255,0.95);
+    border-radius: 999px;
+    padding: 10px 16px;
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; color: var(--kt-text-3);
+  }
+
+  /* 公告条 */
+  .announce {
+    margin: 28px 14px 12px;
+    background: var(--kt-warning);
+    border: 2px solid var(--kt-dark);
+    border-radius: 12px;
+    padding: 8px 12px;
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; font-weight: 700; color: var(--kt-dark);
+    box-shadow: 3px 3px 0 var(--kt-dark);
+  }
+  .announce .marquee { flex: 1; overflow: hidden; white-space: nowrap; }
+  .announce em { font-style: normal; color: var(--kt-primary); margin: 0 2px; font-size: 13px; }
+
+  /* 分类 Tab */
+  .cat-tabs {
+    display: flex; gap: 8px; overflow-x: auto; padding: 0 14px 6px;
+    margin-bottom: 12px;
+  }
+  .cat-tabs::-webkit-scrollbar { display: none; }
+  .cat-tab {
+    flex-shrink: 0;
+    padding: 6px 14px; border-radius: 999px;
+    background: #fff; border: 1px solid var(--kt-border);
+    font-size: 13px; font-weight: 600; color: var(--kt-text-2);
+    white-space: nowrap;
+  }
+  .cat-tab.active {
+    background: var(--kt-dark); color: var(--kt-warning);
+    border-color: var(--kt-dark);
+  }
+
+  /* 瀑布流 */
+  .waterfall {
+    column-count: 2;
+    column-gap: 8px;
+    padding: 0 10px 100px;
+  }
+  .thunder-card {
+    background: #fff; border-radius: 14px; overflow: hidden;
+    break-inside: avoid; margin-bottom: 10px;
+    box-shadow: var(--shadow-card);
+    position: relative;
+  }
+  .cover {
+    width: 100%;
+    display: flex; align-items: flex-end; justify-content: flex-start;
+    padding: 8px; color: #fff;
+    font-size: 36px;
+    position: relative;
+    background-size: cover; background-position: center;
+  }
+  .cover.h180 { height: 180px; }
+  .cover.h220 { height: 220px; }
+  .cover.h150 { height: 150px; }
+  .cover.h200 { height: 200px; }
+
+  /* 模拟图片色块（不同主题） */
+  .cover-seafood { background: linear-gradient(135deg, #FF6B6B 0%, #C44569 100%); }
+  .cover-scenic  { background: linear-gradient(135deg, #4ECDC4 0%, #1A535C 100%); }
+  .cover-hotel   { background: linear-gradient(135deg, #6C5CE7 0%, #2D3436 100%); }
+  .cover-bbq     { background: linear-gradient(135deg, #F8B500 0%, #B33771 100%); }
+  .cover-digital { background: linear-gradient(135deg, #00B894 0%, #0984E3 100%); }
+  .cover-beauty  { background: linear-gradient(135deg, #FD79A8 0%, #E84393 100%); }
+  .cover-icon { font-size: 70px; opacity: 0.8; align-self: center; margin: auto; }
+
+  .cover-badge {
+    position: absolute; top: 8px; left: 8px;
+    background: var(--kt-dark); color: var(--kt-warning);
+    font-size: 10px; font-weight: 900; padding: 3px 8px;
+    border-radius: 4px; letter-spacing: 1px;
+  }
+  .cover-badge.big {
+    font-size: 11px; padding: 4px 10px;
+    background: var(--kt-primary);
+    color: #fff;
+  }
+
+  .card-body { padding: 10px 10px 12px; }
+  .card-title {
+    font-size: 14px; font-weight: 800; color: var(--kt-text-1);
+    line-height: 1.35; margin-bottom: 8px;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .bomb-row { display: flex; align-items: center; gap: 4px; margin-bottom: 6px; font-size: 13px; }
+  .bomb-row .bombs { letter-spacing: -2px; }
+  .loss {
+    display: inline-block; font-size: 16px; font-weight: 900;
+    color: var(--kt-primary);
+    -webkit-text-stroke: 0.5px var(--kt-dark);
+    margin-bottom: 6px;
+  }
+  .meta-row {
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 10px; color: var(--kt-text-3);
+  }
+  .meta-row .loc {
+    display: flex; align-items: center; gap: 2px;
+    max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .meta-row .author {
+    display: flex; align-items: center; gap: 4px;
+  }
+  .meta-row .avatar-mini {
+    width: 16px; height: 16px; border-radius: 50%; background: var(--kt-primary-light);
+    display: inline-flex; align-items: center; justify-content: center; font-size: 9px;
+  }
+  .avoid-pill {
+    display: inline-flex; align-items: center; gap: 2px;
+    background: var(--kt-primary-light); color: var(--kt-primary);
+    padding: 2px 6px; border-radius: 999px; font-size: 10px; font-weight: 700;
+  }
+
+  /* Banner 热榜 */
+  .hot-banner {
+    margin: 0 14px 14px;
+    background: linear-gradient(120deg, #1A1A1A 0%, #2D2D2D 100%);
+    border-radius: 14px; padding: 12px 14px;
+    color: #fff;
+    display: flex; align-items: center; gap: 12px;
+    position: relative; overflow: hidden;
+  }
+  .hot-banner::before {
+    content: "🔥"; position: absolute; right: -10px; bottom: -20px; font-size: 80px; opacity: 0.15;
+  }
+  .hot-banner .left { flex-shrink: 0; }
+  .hot-banner .title { font-size: 16px; font-weight: 900; color: var(--kt-warning); }
+  .hot-banner .desc { font-size: 11px; color: rgba(255,255,255,0.7); margin-top: 2px; }
+  .hot-banner .btn {
+    margin-left: auto; background: var(--kt-warning); color: var(--kt-dark);
+    padding: 5px 12px; border-radius: 999px; font-size: 11px; font-weight: 700;
+    z-index: 2;
+  }
+
+  /* =========================================================
+     画板 ② 详情页
+  ========================================================= */
+  .detail-header {
+    position: absolute; top: 0; left: 0; right: 0; z-index: 30;
+    padding: 54px 16px 12px;
+    display: flex; align-items: center; justify-content: space-between;
+    background: linear-gradient(180deg, rgba(0,0,0,0.45) 0%, transparent 100%);
+  }
+  .detail-header .ico-btn {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(0,0,0,0.4); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-size: 16px;
+  }
+
+  .gallery {
+    width: 100%; height: 320px;
+    background: linear-gradient(135deg, #FF6B6B 0%, #C44569 100%);
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .gallery .emoji { font-size: 120px; opacity: 0.85; }
+  .gallery .dots {
+    position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 5px;
+  }
+  .gallery .dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.5); }
+  .gallery .dot.active { background: #fff; width: 16px; border-radius: 3px; }
+  .gallery .pager {
+    position: absolute; top: 80px; right: 14px;
+    background: rgba(0,0,0,0.5); color: #fff;
+    padding: 3px 10px; border-radius: 999px; font-size: 11px;
+  }
+
+  /* 大字报评分区 */
+  .poster {
+    margin: -20px 14px 0;
+    background: var(--kt-dark);
+    border-radius: 16px;
+    padding: 16px;
+    position: relative;
+    z-index: 5;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    border: 3px solid var(--kt-primary);
+  }
+  .poster::before {
+    content: "踩雷警告"; position: absolute; top: -10px; left: 16px;
+    background: var(--kt-primary); color: #fff;
+    padding: 2px 10px; font-size: 11px; font-weight: 900; letter-spacing: 2px;
+    border-radius: 4px;
+  }
+  .poster .bomb-line {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .poster .bombs-big { font-size: 22px; letter-spacing: -3px; }
+  .poster .level-text { color: var(--kt-warning); font-weight: 900; font-size: 15px; }
+  .poster .loss-big {
+    font-size: 32px; font-weight: 900; color: var(--kt-warning);
+    -webkit-text-stroke: 1px var(--kt-primary);
+    letter-spacing: 1px;
+    transform: skewX(-4deg);
+    display: inline-block;
+  }
+  .poster .loss-label { color: rgba(255,255,255,0.7); font-size: 11px; margin-right: 6px; }
+  .poster .loc-line {
+    margin-top: 10px; color: #fff; font-size: 13px;
+    display: flex; align-items: center; gap: 6px;
+    border-top: 1px dashed rgba(255,255,255,0.2);
+    padding-top: 10px;
+  }
+
+  /* 作者条 */
+  .author-bar {
+    margin: 16px 14px 0;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .author-bar .avatar {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: linear-gradient(135deg, #FF6B35, #FFB800);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 900; font-size: 16px;
+  }
+  .author-bar .name { font-size: 14px; font-weight: 700; }
+  .author-bar .time { font-size: 11px; color: var(--kt-text-3); }
+  .author-bar .follow {
+    margin-left: auto; padding: 4px 12px; border-radius: 999px;
+    border: 1.5px solid var(--kt-primary); color: var(--kt-primary);
+    font-size: 12px; font-weight: 700; background: #fff;
+  }
+
+  /* 正文 */
+  .detail-body { padding: 14px 16px 0; }
+  .detail-body h2 { font-size: 18px; font-weight: 900; margin-bottom: 8px; line-height: 1.4; }
+  .detail-body p { font-size: 14px; color: var(--kt-text-2); line-height: 1.7; margin-bottom: 8px; }
+  .detail-body .topic-row { margin-top: 8px; }
+  .detail-body .topic {
+    display: inline-block; color: var(--kt-primary); font-size: 13px; font-weight: 600; margin-right: 8px;
+  }
+
+  /* 地图卡片 */
+  .map-card {
+    margin: 14px 14px 0;
+    background: #fff; border: 1px solid var(--kt-border);
+    border-radius: 14px; overflow: hidden;
+  }
+  .map-thumb {
+    height: 80px;
+    background:
+      linear-gradient(135deg, rgba(255,59,48,0.1), rgba(255,184,0,0.1)),
+      repeating-linear-gradient(45deg, #E8F1E8 0 6px, #DCEADC 6px 12px),
+      repeating-linear-gradient(135deg, #F0F0F0 0 8px, #E8E8E8 8px 16px);
+    background-blend-mode: normal;
+    position: relative;
+  }
+  .map-thumb::after {
+    content: "📍"; position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%); font-size: 28px;
+  }
+  .map-info { padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; }
+  .map-info .name { font-size: 13px; font-weight: 700; }
+  .map-info .dist { font-size: 11px; color: var(--kt-text-3); margin-top: 2px; }
+  .map-info .nav-btn {
+    background: var(--kt-primary); color: #fff;
+    padding: 5px 12px; border-radius: 999px;
+    font-size: 11px; font-weight: 700;
+  }
+
+  /* 避雷 CTA */
+  .avoid-cta {
+    margin: 18px 14px 0;
+    background: linear-gradient(135deg, #FF3B30 0%, #FF6B35 100%);
+    border-radius: 16px; padding: 14px;
+    display: flex; align-items: center; gap: 12px;
+    color: #fff;
+    box-shadow: var(--shadow-bomb);
+    position: relative;
+    overflow: hidden;
+  }
+  .avoid-cta::before {
+    content: "⚡"; position: absolute; right: -10px; bottom: -10px;
+    font-size: 80px; opacity: 0.2;
+  }
+  .avoid-cta .num { font-size: 28px; font-weight: 900; line-height: 1; }
+  .avoid-cta .label { font-size: 11px; opacity: 0.9; margin-top: 4px; }
+  .avoid-cta .btn {
+    margin-left: auto; background: #fff; color: var(--kt-primary);
+    padding: 10px 16px; border-radius: 999px; font-size: 13px; font-weight: 900;
+    z-index: 2;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  }
+
+  /* 评论 */
+  .comments { padding: 18px 16px 96px; }
+  .comments h3 { font-size: 15px; font-weight: 800; margin-bottom: 12px; }
+  .comment {
+    display: flex; gap: 10px; margin-bottom: 14px;
+  }
+  .comment .avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 12px; font-weight: 700;
+  }
+  .av-1 { background: linear-gradient(135deg, #FF6B6B, #C44569); }
+  .av-2 { background: linear-gradient(135deg, #4ECDC4, #1A535C); }
+  .av-3 { background: linear-gradient(135deg, #FFB800, #FF6B35); }
+  .av-4 { background: linear-gradient(135deg, #6C5CE7, #2D3436); }
+  .comment .body { flex: 1; }
+  .comment .name-row {
+    display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--kt-text-3); margin-bottom: 3px;
+  }
+  .comment .name-row b { color: var(--kt-text-2); font-weight: 700; }
+  .comment .content { font-size: 13px; color: var(--kt-text-1); line-height: 1.5; }
+  .comment .actions { display: flex; gap: 14px; margin-top: 4px; font-size: 11px; color: var(--kt-text-3); }
+
+  /* 详情页底部固定栏 */
+  .detail-bottom {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 70px;
+    background: #fff; border-top: 1px solid var(--kt-border);
+    display: flex; align-items: center; padding: 0 14px 16px; gap: 10px;
+    z-index: 60;
+  }
+  .detail-bottom .input {
+    flex: 1;
+    background: var(--kt-bg);
+    border-radius: 999px;
+    padding: 9px 14px;
+    font-size: 12px; color: var(--kt-text-3);
+  }
+  .detail-bottom .ic {
+    display: flex; flex-direction: column; align-items: center;
+    font-size: 18px; color: var(--kt-text-2);
+  }
+  .detail-bottom .ic span { font-size: 10px; color: var(--kt-text-3); margin-top: 2px; font-weight: 600; }
+  .detail-bottom .ic.liked { color: var(--kt-primary); }
+
+  /* =========================================================
+     画板 ③ 发布页
+  ========================================================= */
+  .pub-topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 16px 12px; border-bottom: 1px solid var(--kt-border);
+  }
+  .pub-topbar .x { font-size: 22px; color: var(--kt-text-2); }
+  .pub-topbar .title { font-size: 17px; font-weight: 900; }
+  .pub-topbar .submit {
+    background: linear-gradient(135deg, #FF3B30, #FF6B35);
+    color: #fff; font-weight: 800;
+    padding: 6px 16px; border-radius: 999px; font-size: 13px;
+  }
+
+  .pub-body { padding: 16px; padding-bottom: 100px; }
+
+  /* 9 宫格上传 */
+  .uploader {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+    margin-bottom: 16px;
+  }
+  .upload-item {
+    aspect-ratio: 1;
+    border-radius: 10px; overflow: hidden;
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 38px; color: #fff;
+  }
+  .upload-item .del {
+    position: absolute; top: 4px; right: 4px;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: rgba(0,0,0,0.6); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+  }
+  .upload-empty {
+    background: var(--kt-bg);
+    border: 2px dashed var(--kt-border);
+    color: var(--kt-text-3);
+    font-size: 28px;
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .upload-empty small { font-size: 10px; }
+
+  /* 标题输入 */
+  .title-input {
+    width: 100%; border: none; outline: none; background: transparent;
+    font-size: 22px; font-weight: 900; color: var(--kt-text-1);
+    padding: 8px 0; border-bottom: 1px solid var(--kt-border);
+    margin-bottom: 12px;
+  }
+  .title-input::placeholder { color: var(--kt-text-3); font-weight: 800; }
+
+  /* 多行 */
+  .content-area {
+    min-height: 100px; padding: 8px 0;
+    font-size: 14px; color: var(--kt-text-2); line-height: 1.7;
+    border-bottom: 1px solid var(--kt-border);
+    margin-bottom: 16px;
+  }
+  .content-area.placeholder { color: var(--kt-text-3); }
+
+  /* 评分块 */
+  .rating-block {
+    background: linear-gradient(135deg, #FFF8C5 0%, #FFE5E3 100%);
+    border: 2px solid var(--kt-dark);
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    box-shadow: 3px 3px 0 var(--kt-dark);
+  }
+  .rating-block .lbl {
+    font-size: 14px; font-weight: 900;
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .rating-block .lbl .hint { color: var(--kt-primary); font-size: 12px; font-weight: 700; }
+  .rating-block .bombs-pick {
+    font-size: 30px; letter-spacing: 2px;
+    display: flex; gap: 4px;
+  }
+  .rating-block .bombs-pick span { cursor: pointer; transition: transform 0.2s; }
+  .rating-block .bombs-pick .off { opacity: 0.25; filter: grayscale(1); }
+
+  /* 表单行 */
+  .form-row {
+    display: flex; align-items: center; padding: 14px 0;
+    border-bottom: 1px solid var(--kt-border);
+    font-size: 14px;
+  }
+  .form-row .icon { font-size: 18px; margin-right: 12px; }
+  .form-row .lbl { font-weight: 700; width: 80px; flex-shrink: 0; }
+  .form-row .val { flex: 1; color: var(--kt-text-2); }
+  .form-row .val.placeholder { color: var(--kt-text-3); }
+  .form-row .arrow { color: var(--kt-text-3); font-size: 16px; }
+  .form-row .loss-val { color: var(--kt-primary); font-weight: 900; font-size: 16px; }
+  .form-row .yen { color: var(--kt-primary); font-weight: 900; }
+
+  /* 话题 */
+  .topic-row-pub {
+    padding: 14px 0;
+  }
+  .topic-row-pub .lbl { font-weight: 700; margin-bottom: 8px; font-size: 14px; }
+  .topic-row-pub .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    background: var(--kt-primary-light); color: var(--kt-primary);
+    padding: 5px 10px; border-radius: 999px;
+    font-size: 12px; font-weight: 700;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .chip .x { font-size: 10px; opacity: 0.7; }
+  .chip.add {
+    background: transparent; color: var(--kt-text-3);
+    border: 1px dashed var(--kt-border);
+  }
+
+  /* =========================================================
+     画板 ④ 个人中心
+  ========================================================= */
+  .profile-banner {
+    background: linear-gradient(160deg, #FF3B30 0%, #FF6B35 50%, #1A1A1A 130%);
+    padding: 60px 16px 70px; position: relative;
+    overflow: hidden;
+  }
+  .profile-banner::before {
+    content: "避雷侠"; position: absolute;
+    right: -10px; top: 30px;
+    font-size: 90px; font-weight: 900;
+    color: rgba(255,255,255,0.08);
+    transform: rotate(-10deg);
+    letter-spacing: 2px;
+  }
+  .profile-banner .top-row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 18px;
+  }
+  .profile-banner .top-row .settings { color: #fff; font-size: 20px; opacity: 0.8; }
+  .profile-banner .user-row { display: flex; align-items: center; gap: 14px; position: relative; z-index: 2; }
+  .profile-banner .avatar-big {
+    width: 64px; height: 64px; border-radius: 50%;
+    background: linear-gradient(135deg, #FFB800, #FF6B35);
+    border: 3px solid #fff;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 900; font-size: 24px;
+  }
+  .profile-banner .nickname { color: #fff; font-size: 22px; font-weight: 900; }
+  .profile-banner .lv-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: var(--kt-warning); color: var(--kt-dark);
+    padding: 2px 8px; border-radius: 999px;
+    font-size: 11px; font-weight: 900; margin-top: 4px;
+  }
+
+  /* 已救助勋章 */
+  .save-medal {
+    margin: -50px 14px 0;
+    background: linear-gradient(135deg, #FFE066 0%, #FFB800 100%);
+    border-radius: 16px;
+    padding: 16px;
+    display: flex; align-items: center; gap: 14px;
+    position: relative; z-index: 5;
+    border: 3px solid var(--kt-dark);
+    box-shadow: 4px 4px 0 var(--kt-dark);
+  }
+  .save-medal .shield {
+    font-size: 42px;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+  }
+  .save-medal .num {
+    font-size: 30px; font-weight: 900; color: var(--kt-primary);
+    -webkit-text-stroke: 1px var(--kt-dark); line-height: 1;
+  }
+  .save-medal .label { font-size: 12px; font-weight: 800; color: var(--kt-dark); margin-top: 4px; }
+  .save-medal .arrow-right {
+    margin-left: auto; font-size: 18px; color: var(--kt-dark);
+  }
+
+  /* 数据条 */
+  .stats-row {
+    margin: 14px; padding: 14px 0;
+    background: #fff; border-radius: 12px;
+    display: flex; align-items: center; justify-content: space-around;
+    box-shadow: var(--shadow-card);
+  }
+  .stat-cell { text-align: center; }
+  .stat-cell .v { font-size: 18px; font-weight: 900; color: var(--kt-text-1); }
+  .stat-cell .k { font-size: 11px; color: var(--kt-text-3); margin-top: 2px; }
+  .stats-row .divider { width: 1px; height: 24px; background: var(--kt-border); }
+
+  /* Tab */
+  .profile-tabs {
+    display: flex; padding: 0 14px;
+    border-bottom: 1px solid var(--kt-border);
+    margin-bottom: 8px;
+  }
+  .profile-tabs .pt {
+    padding: 10px 14px;
+    font-size: 14px; font-weight: 700; color: var(--kt-text-3);
+    position: relative;
+  }
+  .profile-tabs .pt.active { color: var(--kt-text-1); }
+  .profile-tabs .pt.active::after {
+    content: ""; position: absolute; bottom: -1px; left: 50%; transform: translateX(-50%);
+    width: 24px; height: 3px; background: var(--kt-primary); border-radius: 2px;
+  }
+
+  /* 通用底部安全区 */
+  .home-indicator {
+    position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+    width: 134px; height: 5px; background: rgba(0,0,0,0.4); border-radius: 3px; z-index: 99;
+  }
+  .home-indicator.light { background: rgba(255,255,255,0.8); }
+
+  /* =========================================================
+     画板 ⓪ 启动加载页 (Splash)
+  ========================================================= */
+  .splash {
+    flex: 1;
+    background:
+      radial-gradient(circle at 30% 20%, rgba(255,214,10,0.4) 0%, transparent 40%),
+      radial-gradient(circle at 70% 70%, rgba(255,107,53,0.5) 0%, transparent 50%),
+      linear-gradient(160deg, #FF3B30 0%, #FF1F12 50%, #1A1A1A 130%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    position: relative; overflow: hidden;
+    color: #fff;
+  }
+  /* 背景闪电纹理 */
+  .splash::before {
+    content: "⚡"; position: absolute;
+    font-size: 380px; color: rgba(255,214,10,0.08);
+    top: 8%; right: -60px; transform: rotate(15deg);
+    line-height: 1;
+  }
+  .splash::after {
+    content: "💣"; position: absolute;
+    font-size: 200px; opacity: 0.08;
+    bottom: 12%; left: -30px;
+    line-height: 1;
+  }
+  .splash-logo {
+    font-size: 84px; font-weight: 900;
+    color: #fff; letter-spacing: -2px;
+    transform: skewX(-10deg);
+    text-shadow:
+      4px 4px 0 var(--kt-dark),
+      8px 8px 0 var(--kt-warning);
+    display: flex; align-items: center; gap: 6px;
+    position: relative; z-index: 2;
+    animation: splashIn 1s ease-out;
+  }
+  .splash-logo .bolt {
+    font-size: 64px;
+    -webkit-text-fill-color: var(--kt-warning);
+    text-shadow: 3px 3px 0 var(--kt-dark);
+    animation: shake 1.2s ease-in-out infinite;
+    display: inline-block;
+  }
+  @keyframes splashIn {
+    0% { opacity: 0; transform: skewX(-10deg) scale(0.6); }
+    60% { transform: skewX(-10deg) scale(1.1); }
+    100% { opacity: 1; transform: skewX(-10deg) scale(1); }
+  }
+  @keyframes shake {
+    0%, 100% { transform: rotate(-8deg); }
+    50% { transform: rotate(8deg); }
+  }
+  .splash-slogan {
+    margin-top: 24px;
+    font-size: 16px; font-weight: 800; color: #fff;
+    background: var(--kt-dark);
+    padding: 6px 16px;
+    border-radius: 4px;
+    letter-spacing: 4px;
+    transform: skewX(-6deg);
+    position: relative; z-index: 2;
+  }
+  .splash-sub {
+    margin-top: 14px; font-size: 12px;
+    color: rgba(255,255,255,0.8); letter-spacing: 1px;
+    position: relative; z-index: 2;
+  }
+  .splash-loading {
+    position: absolute; bottom: 110px; left: 0; right: 0;
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+    z-index: 2;
+  }
+  .splash-loading .bar {
+    width: 160px; height: 4px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 2px; overflow: hidden;
+  }
+  .splash-loading .bar-fill {
+    width: 65%; height: 100%;
+    background: linear-gradient(90deg, var(--kt-warning), #fff);
+    border-radius: 2px;
+    animation: loadingMove 1.6s ease-in-out infinite;
+  }
+  @keyframes loadingMove {
+    0% { width: 10%; }
+    50% { width: 85%; }
+    100% { width: 10%; }
+  }
+  .splash-loading .tip {
+    font-size: 11px; color: rgba(255,255,255,0.7);
+  }
+  .splash-foot {
+    position: absolute; bottom: 40px; left: 0; right: 0;
+    text-align: center; font-size: 10px;
+    color: rgba(255,255,255,0.5); letter-spacing: 2px;
+    z-index: 2;
+  }
+
+  /* =========================================================
+     画板 ①' 登录页
+  ========================================================= */
+  .auth-page {
+    flex: 1;
+    background: var(--kt-bg);
+    display: flex; flex-direction: column;
+    padding: 0 28px;
+    position: relative;
+    overflow: hidden;
+  }
+  .auth-bg-deco {
+    position: absolute; top: -50px; right: -80px;
+    width: 280px; height: 280px;
+    background: radial-gradient(circle, rgba(255,59,48,0.12) 0%, transparent 70%);
+    border-radius: 50%; pointer-events: none;
+  }
+  .auth-bg-deco-2 {
+    position: absolute; bottom: 120px; left: -100px;
+    width: 240px; height: 240px;
+    background: radial-gradient(circle, rgba(255,214,10,0.18) 0%, transparent 70%);
+    border-radius: 50%; pointer-events: none;
+  }
+  .auth-top { padding: 70px 0 36px; position: relative; z-index: 2; }
+  .auth-top .mini-logo {
+    font-size: 38px; font-weight: 900;
+    color: var(--kt-primary); letter-spacing: -1px;
+    transform: skewX(-8deg); display: inline-flex; align-items: center; gap: 4px;
+    text-shadow: 2px 2px 0 var(--kt-dark);
+  }
+  .auth-top .mini-logo .b { color: var(--kt-warning); -webkit-text-stroke: 1px var(--kt-dark); }
+  .auth-title {
+    font-size: 30px; font-weight: 900; margin-top: 28px;
+    line-height: 1.3;
+  }
+  .auth-title em {
+    font-style: normal; color: var(--kt-primary);
+    background: linear-gradient(180deg, transparent 60%, var(--kt-warning) 60%, var(--kt-warning) 90%, transparent 90%);
+    padding: 0 4px;
+  }
+  .auth-subtitle {
+    margin-top: 10px;
+    color: var(--kt-text-3); font-size: 13px; line-height: 1.6;
+  }
+
+  .auth-form { margin-top: 30px; position: relative; z-index: 2; }
+  .auth-input {
+    display: flex; align-items: center; gap: 10px;
+    background: #fff;
+    border: 1.5px solid var(--kt-border);
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+    font-size: 14px;
+    box-shadow: var(--shadow-card);
+  }
+  .auth-input.focused {
+    border-color: var(--kt-primary);
+    box-shadow: 0 4px 12px rgba(255,59,48,0.15);
+  }
+  .auth-input .lead { font-size: 18px; color: var(--kt-text-2); }
+  .auth-input .val { flex: 1; color: var(--kt-text-1); }
+  .auth-input .val.placeholder { color: var(--kt-text-3); }
+  .auth-input .code-btn {
+    color: var(--kt-primary); font-size: 12px; font-weight: 700;
+    padding: 4px 10px; border-radius: 999px;
+    background: var(--kt-primary-light);
+    white-space: nowrap;
+  }
+  .auth-input .code-btn.disabled { color: var(--kt-text-3); background: var(--kt-bg); }
+  .auth-input .eye { color: var(--kt-text-3); font-size: 16px; }
+
+  .auth-row-extra {
+    display: flex; align-items: center; justify-content: space-between;
+    margin: 4px 4px 22px;
+    font-size: 12px;
+  }
+  .auth-row-extra .agree { color: var(--kt-text-3); display: flex; align-items: center; gap: 6px; }
+  .auth-row-extra .agree .check {
+    width: 14px; height: 14px; border-radius: 50%;
+    background: var(--kt-primary);
+    color: #fff; display: inline-flex; align-items: center; justify-content: center;
+    font-size: 9px; font-weight: 900;
+  }
+  .auth-row-extra .agree a { color: var(--kt-primary); }
+  .auth-row-extra .forgot { color: var(--kt-text-2); font-weight: 600; }
+
+  .auth-submit {
+    background: linear-gradient(135deg, #FF3B30 0%, #FF6B35 100%);
+    color: #fff; font-size: 16px; font-weight: 900;
+    border-radius: 14px;
+    padding: 14px;
+    text-align: center;
+    letter-spacing: 4px;
+    box-shadow: var(--shadow-bomb);
+    transform: skewX(-2deg);
+    position: relative;
+  }
+  .auth-submit::after {
+    content: "⚡"; position: absolute; right: 16px; top: 50%;
+    transform: translateY(-50%); font-size: 18px;
+    -webkit-text-fill-color: var(--kt-warning);
+  }
+
+  .auth-switch {
+    margin-top: 18px; text-align: center;
+    font-size: 13px; color: var(--kt-text-3);
+  }
+  .auth-switch a { color: var(--kt-primary); font-weight: 700; }
+
+  /* 三方登录 */
+  .auth-divider {
+    margin: 32px 0 18px;
+    display: flex; align-items: center; gap: 12px;
+    color: var(--kt-text-3); font-size: 11px;
+    position: relative; z-index: 2;
+  }
+  .auth-divider .line { flex: 1; height: 1px; background: var(--kt-border); }
+  .auth-third {
+    display: flex; justify-content: center; gap: 24px;
+    position: relative; z-index: 2;
+  }
+  .third-btn {
+    width: 48px; height: 48px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+    box-shadow: var(--shadow-card);
+  }
+  .third-btn.wx { background: #07C160; color: #fff; }
+  .third-btn.qq { background: #12B7F5; color: #fff; }
+  .third-btn.apple { background: var(--kt-dark); color: #fff; }
+
+  .auth-tabs {
+    display: flex; gap: 22px; margin-top: 18px;
+    position: relative; z-index: 2;
+  }
+  .auth-tab {
+    font-size: 14px; font-weight: 700;
+    color: var(--kt-text-3);
+    padding-bottom: 6px;
+    position: relative;
+  }
+  .auth-tab.active { color: var(--kt-text-1); font-size: 16px; }
+  .auth-tab.active::after {
+    content: ""; position: absolute; left: 0; right: 30%;
+    bottom: 0; height: 3px;
+    background: var(--kt-primary); border-radius: 2px;
+  }
+
+  /* 注册页头像选择 */
+  .reg-avatar-row {
+    display: flex; align-items: center; gap: 14px;
+    margin-bottom: 16px;
+    background: #fff;
+    border-radius: 14px; padding: 14px 16px;
+    border: 1.5px solid var(--kt-border);
+    box-shadow: var(--shadow-card);
+  }
+  .reg-avatar-row .av-big {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: linear-gradient(135deg, #FF6B35, #FFB800);
+    color: #fff; font-size: 18px; font-weight: 900;
+    display: flex; align-items: center; justify-content: center;
+    border: 2px solid var(--kt-dark);
+    position: relative;
+  }
+  .reg-avatar-row .av-big .cam {
+    position: absolute; bottom: -2px; right: -2px;
+    width: 20px; height: 20px; border-radius: 50%;
+    background: var(--kt-primary); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; border: 2px solid #fff;
+  }
+  .reg-avatar-row .txt { font-size: 13px; }
+  .reg-avatar-row .txt b { font-size: 14px; font-weight: 800; }
+  .reg-avatar-row .txt small { color: var(--kt-text-3); font-size: 11px; display: block; margin-top: 2px; }
+
+  .reg-interest-block {
+    margin-top: 10px;
+    background: #fff;
+    border: 1.5px solid var(--kt-border);
+    border-radius: 14px; padding: 14px 16px;
+    box-shadow: var(--shadow-card);
+  }
+  .reg-interest-block .lbl {
+    font-size: 13px; font-weight: 800; margin-bottom: 10px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .reg-interest-block .lbl small { color: var(--kt-text-3); font-size: 11px; font-weight: 500; }
+  .reg-interest-block .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .interest-chip {
+    padding: 5px 12px; border-radius: 999px;
+    background: var(--kt-bg);
+    border: 1px solid var(--kt-border);
+    font-size: 12px; font-weight: 600;
+    color: var(--kt-text-2);
+  }
+  .interest-chip.active {
+    background: var(--kt-primary); color: #fff;
+    border-color: var(--kt-primary);
+  }
+
+</style>
+</head>
+<body>
+
+<div class="preview-header">
+  <h1>⚡ 快逃 · 避雷 App UI 设计稿</h1>
+  <p>炸裂吐槽风 · 7 页完整业务流 · iPhone 14 Pro (393×852)</p>
+  <p class="meta">启动加载　→　登录　→　注册　→　首页雷区广场　·　雷帖详情　·　发布避雷帖　·　个人中心</p>
+  <div class="flow-diagram">
+    <span class="flow-node start">⓪ Splash</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-node">① 登录</span>
+    <span class="flow-arrow">⇄</span>
+    <span class="flow-node">② 注册</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-node core">③ 首页 雷区广场</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-node">④ 雷帖详情</span>
+    <span class="flow-arrow">↑</span>
+    <span class="flow-node">⑤ 发布避雷帖</span>
+    <span class="flow-arrow">↑</span>
+    <span class="flow-node">⑥ 个人中心</span>
+  </div>
+</div>
+
+<div class="canvas-row">
+
+  <!-- ============================================================
+       画板 ⓪ 启动加载页 (Splash Screen)
+  ============================================================ -->
+  <div class="phone-wrap">
+    <div class="phone-label">⓪ 启动加载页</div>
+    <div class="phone">
+      <div class="screen">
+        <div class="dynamic-island"></div>
+        <div class="status-bar on-dark">
+          <span>9:41</span>
+          <div class="icons">
+            <span>●●●●</span><span>📶</span><span>🔋</span>
+          </div>
+        </div>
+
+        <div class="splash">
+          <div class="splash-logo">
+            <span class="bolt">⚡</span>快逃
+          </div>
+          <div class="splash-slogan">看清这世界的雷</div>
+          <div class="splash-sub">AVOID · THE · TRAP</div>
+
+          <div class="splash-loading">
+            <div class="bar"><div class="bar-fill"></div></div>
+            <div class="tip">正在为你扫描新雷区...</div>
+          </div>
+
+          <div class="splash-foot">© 2026 KUAITAO  ·  v1.0.0</div>
+        </div>
+
+        <div class="home-indicator light"></div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============================================================
+       画板 ①' 登录页
+  ============================================================ -->
+  <div class="phone-wrap">
+    <div class="phone-label">① 登录</div>
+    <div class="phone">
+      <div class="screen">
+        <div class="dynamic-island"></div>
+        <div class="status-bar">
+          <span>9:41</span>
+          <div class="icons">
+            <span>●●●●</span><span>📶</span><span>🔋</span>
+          </div>
+        </div>
+
+        <div class="auth-page">
+          <div class="auth-bg-deco"></div>
+          <div class="auth-bg-deco-2"></div>
+
+          <div class="auth-top">
+            <div class="mini-logo"><span class="b">⚡</span>快逃</div>
+            <div class="auth-title">
+              欢迎回来，<br/>继续 <em>避雷</em> 之旅 💣
+            </div>
+            <div class="auth-subtitle">
+              登录后可发帖、收藏、查看个人雷库
+            </div>
+          </div>
+
+          <div class="auth-tabs">
+            <div class="auth-tab active">验证码登录</div>
+            <div class="auth-tab">密码登录</div>
+          </div>
+
+          <div class="auth-form">
+            <div class="auth-input focused">
+              <span class="lead">📱</span>
+              <span class="val">138 ****  6688</span>
+            </div>
+            <div class="auth-input">
+              <span class="lead">🔐</span>
+              <span class="val placeholder">请输入 6 位验证码</span>
+              <span class="code-btn">获取验证码</span>
+            </div>
+
+            <div class="auth-row-extra">
+              <div class="agree">
+                <span class="check">✓</span>
+                已阅读并同意 <a>《用户协议》</a> <a>《隐私政策》</a>
+              </div>
+            </div>
+
+            <div class="auth-submit">登 录</div>
+
+            <div class="auth-switch">
+              还没账号？<a>立即注册 ›</a>
+            </div>
+          </div>
+
+          <div class="auth-divider">
+            <div class="line"></div>
+            <span>其他方式登录</span>
+            <div class="line"></div>
+          </div>
+          <div class="auth-third">
+            <div class="third-btn wx">💬</div>
+            <div class="third-btn qq">🐧</div>
+            <div class="third-btn apple"></div>
+          </div>
+        </div>
+
+        <div class="home-indicator"></div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============================================================
+       画板 ①'' 注册页
+  ============================================================ -->
+  <div class="phone-wrap">
+    <div class="phone-label">② 注册 / 完善资料</div>
+    <div class="phone">
+      <div class="screen">
+        <div class="dynamic-island"></div>
+        <div class="status-bar">
+          <span>9:41</span>
+          <div class="icons">
+            <span>●●●●</span><span>📶</span><span>🔋</span>
+          </div>
+        </div>
+
+        <div class="auth-page">
+          <div class="auth-bg-deco"></div>
+          <div class="auth-bg-deco-2"></div>
+
+          <div class="auth-top" style="padding-top:60px;">
+            <div class="mini-logo"><span class="b">⚡</span>快逃</div>
+            <div class="auth-title">
+              开始你的 <em>避雷侠</em> 之路 🛡
+            </div>
+            <div class="auth-subtitle">
+              已有 <b style="color:var(--kt-primary)">128 万</b> 用户帮你扫雷
+            </div>
+          </div>
+
+          <div class="auth-form" style="margin-top:20px;">
+            <!-- 头像 + 昵称 -->
+            <div class="reg-avatar-row">
+              <div class="av-big">明<div class="cam">📷</div></div>
+              <div class="txt">
+                <b>设置你的避雷代号</b>
+                <small>建议起个让人过目不忘的昵称</small>
+              </div>
+            </div>
+
+            <div class="auth-input focused">
+              <span class="lead">👤</span>
+              <span class="val">小明被坑日记</span>
+            </div>
+
+            <div class="auth-input">
+              <span class="lead">📱</span>
+              <span class="val">138 8888 6688</span>
+            </div>
+
+            <div class="auth-input">
+              <span class="lead">🔐</span>
+              <span class="val placeholder">请输入 6 位验证码</span>
+              <span class="code-btn disabled">58s 后重发</span>
+            </div>
+
+            <div class="auth-input">
+              <span class="lead">🗝</span>
+              <span class="val placeholder">设置登录密码（8-20 位）</span>
+              <span class="eye">👁</span>
+            </div>
+
+            <!-- 兴趣选择 -->
+            <div class="reg-interest-block">
+              <div class="lbl">
+                <span>🎯 你最想避哪些雷？</span>
+                <small>已选 3 / 至少 1 个</small>
+              </div>
+              <div class="chips">
+                <span class="interest-chip active">🏔 景点</span>
+                <span class="interest-chip active">🍜 美食</span>
+                <span class="interest-chip">📱 数码</span>
+                <span class="interest-chip">🛎 服务</span>
+                <span class="interest-chip active">💄 美妆</span>
+                <span class="interest-chip">🏨 酒店</span>
+              </div>
+            </div>
+
+            <div class="auth-row-extra" style="margin-top:18px;">
+              <div class="agree">
+                <span class="check">✓</span>
+                我已阅读并同意 <a>《用户协议》</a> <a>《隐私政策》</a>
+              </div>
+            </div>
+
+            <div class="auth-submit">注 册 并 进 入</div>
+
+            <div class="auth-switch">
+              已有账号？<a>返回登录 ›</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="home-indicator"></div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============================================================
+       画板 ① 首页 - 雷区广场
+  ============================================================ -->
+  <div class="phone-wrap">
+    <div class="phone-label">③ 首页 · 雷区广场</div>
+    <div class="phone">
+      <div class="screen">
+        <div class="dynamic-island"></div>
+        <div class="status-bar on-dark">
+          <span>9:41</span>
+          <div class="icons">
+            <span>●●●●</span><span>📶</span><span>🔋</span>
+          </div>
+        </div>
+
+        <div class="scroll-area">
+          <!-- Header -->
+          <div class="home-header">
+            <div class="home-logo-row">
+              <div class="logo"><span class="spark">⚡</span>快逃</div>
+              <div class="header-icon">🔔</div>
+            </div>
+            <div class="search-bar">
+              <span>🔍</span>
+              <span>搜你想避的雷...</span>
+            </div>
+          </div>
+
+          <!-- 公告条 -->
+          <div class="announce">
+            <span>📢</span>
+            <div class="marquee">今日新增 <em>287</em> 雷，已救 <em>1.2万</em> 人，本周热词「海鲜刺客」</div>
+          </div>
+
+          <!-- 热榜 Banner -->
+          <div class="hot-banner">
+            <div class="left">
+              <div class="title">本周大雷榜 TOP10</div>
+              <div class="desc">10 个让人哭的离谱踩雷现场</div>
+            </div>
+            <div class="btn">围观</div>
+          </div>
+
+          <!-- 分类 Tab -->
+          <div class="cat-tabs">
+            <div class="cat-tab active">🔥 全部</div>
+            <div class="cat-tab">🏔 景点</div>
+            <div class="cat-tab">🍜 美食</div>
+            <div class="cat-tab">📱 数码</div>
+            <div class="cat-tab">🛎 服务</div>
+            <div class="cat-tab">💄 美妆</div>
+            <div class="cat-tab">🏨 酒店</div>
+          </div>
+
+          <!-- 瀑布流 -->
+          <div class="waterfall">
+            <!-- 卡片 1 -->
+            <div class="thunder-card">
+              <div class="cover h220 cover-seafood">
+                <div class="cover-badge big">💣 5颗雷</div>
+                <div class="cover-icon">🦀</div>
+              </div>
+              <div class="card-body">
+                <div class="card-title">三亚海鲜大排档刺客！一只蟹收我 1280？？</div>
+                <div class="loss">💸 ¥3,800</div>
+                <div class="meta-row">
+                  <div class="loc">📍 三亚·第一市场</div>
+                  <div class="avoid-pill">⚡ 2.3k</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 卡片 2 -->
+            <div class="thunder-card">
+              <div class="cover h180 cover-scenic">
+                <div class="cover-badge big">💣 4颗雷</div>
+                <div class="cover-icon">🏔</div>
+              </div>
+              <div class="card-body">
+                <div class="card-title">网红打卡地翻车实录</div>
+                <div class="loss">💸 ¥680</div>
+                <div class="meta-row">
+                  <div class="loc">📍 重庆·洪崖洞</div>
+                  <div class="avoid-pill">⚡ 891</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 卡片 3 -->
+            <div class="thunder-card">
+              <div class="cover h150 cover-bbq">
+                <div class="cover-badge">⚠ 热议</div>
+                <div class="cover-icon">🍢</div>
+              </div>
+              <div class="card-body">
+                <div class="card-title">这家烧烤店看人下菜碟，本地人和游客两个价</div>
+                <div class="bomb-row"><span class="bombs">💣💣💣</span></div>
+                <div class="loss">💸 ¥520</div>
+                <div class="meta-row">
+                  <div class="loc">📍 青岛·台东</div>
+                  <div class="avoid-pill">⚡ 1.1k</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 卡片 4 -->
+            <div class="thunder-card">
+              <div class="cover h220 cover-hotel">
+                <div class="cover-badge big">💣 5颗雷</div>
+                <div class="cover-icon">🏨</div>
+              </div>
+              <div class="card-body">
+                <div class="card-title">付了行政套房住进了储物间，前台还嘴硬</div>
+                <div class="loss">💸 ¥1,580</div>
+                <div class="meta-row">
+                  <div class="loc">📍 上海·浦东</div>
+                  <div class="avoid-pill">⚡ 567</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 卡片 5 -->
+            <div class="thunder-card">
+              <div class="cover h180 cover-digital">
+                <div class="cover-badge">🆕 新雷</div>
+                <div class="cover-icon">📱</div>
+              </div>
+              <div class="card-body">
+                <div class="card-title">某宝买的"原装"耳机，到手一开盒就傻眼</div>
+                <div class="bomb-row"><span class="bombs">💣💣💣💣</span></div>
+                <div class="loss">💸 ¥899</div>
+                <div class="meta-row">
+                  <div class="loc">📍 线上购物</div>
+                  <div class="avoid-pill">⚡ 432</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 卡片 6 -->
+            <div class="thunder-card">
+              <div class="cover h200 cover-beauty">
+                <div class="cover-badge big">💣 4颗雷</div>
+                <div class="cover-icon">💄</div>
+              </div>
+              <div class="card-body">
+                <div class="card-title">网红美容院"免费体验"套路全记录</div>
+                <div class="loss">💸 ¥6,800</div>
+                <div class="meta-row">
+                  <div class="loc">📍 杭州·西湖区</div>
+                  <div class="avoid-pill">⚡ 1.5k</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 卡片 7 -->
+            <div class="thunder-card">
+              <div class="cover h150 cover-seafood">
+                <div class="cover-badge">⚠ 热议</div>
+                <div class="cover-icon">🍤</div>
+              </div>
+              <div class="card-body">
+                <div class="card-title">所谓"渔家乐"原来是这么个乐法</div>
+                <div class="bomb-row"><span class="bombs">💣💣💣</span></div>
+                <div class="loss">💸 ¥1,200</div>
+                <div class="meta-row">
+                  <div class="loc">📍 厦门·鼓浪屿</div>
+                  <div class="avoid-pill">⚡ 778</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 卡片 8 -->
+            <div class="thunder-card">
+              <div class="cover h180 cover-scenic">
+                <div class="cover-icon">⛰</div>
+              </div>
+              <div class="card-body">
+                <div class="card-title">导游强制购物全过程曝光</div>
+                <div class="bomb-row"><span class="bombs">💣💣💣💣💣</span></div>
+                <div class="loss">💸 ¥4,200</div>
+                <div class="meta-row">
+                  <div class="loc">📍 云南·昆明</div>
+                  <div class="avoid-pill">⚡ 3.2k</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TabBar -->
+        <div class="tabbar">
+          <div class="tab-item active"><div class="ico">🏠</div>首页</div>
+          <div class="tab-publish">+</div>
+          <div class="tab-item"><div class="ico">👤</div>我的</div>
+        </div>
+        <div class="home-indicator"></div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============================================================
+       画板 ② 详情页
+  ============================================================ -->
+  <div class="phone-wrap">
+    <div class="phone-label">④ 雷帖详情</div>
+    <div class="phone">
+      <div class="screen">
+        <div class="dynamic-island"></div>
+        <div class="status-bar on-dark">
+          <span>9:41</span>
+          <div class="icons">
+            <span>●●●●</span><span>📶</span><span>🔋</span>
+          </div>
+        </div>
+
+        <div class="scroll-area" style="padding-top: 0;">
+          <!-- Header overlay -->
+          <div class="detail-header">
+            <div class="ico-btn">←</div>
+            <div class="ico-btn">⋯</div>
+          </div>
+
+          <!-- Gallery -->
+          <div class="gallery">
+            <div class="emoji">🦀</div>
+            <div class="pager">1 / 5</div>
+            <div class="dots">
+              <span class="dot active"></span>
+              <span class="dot"></span>
+              <span class="dot"></span>
+              <span class="dot"></span>
+              <span class="dot"></span>
+            </div>
+          </div>
+
+          <!-- 大字报评分区 -->
+          <div class="poster">
+            <div class="bomb-line">
+              <div class="bombs-big">💣💣💣💣💣</div>
+              <div class="level-text">5 颗雷 · 致命级</div>
+            </div>
+            <div>
+              <span class="loss-label">本次踩雷损失</span>
+              <span class="loss-big">¥3,800</span>
+            </div>
+            <div class="loc-line">
+              <span>📍</span>
+              <span>三亚某海鲜大排档 · 第一市场</span>
+            </div>
+          </div>
+
+          <!-- 作者条 -->
+          <div class="author-bar">
+            <div class="avatar">小</div>
+            <div>
+              <div class="name">小明被坑日记</div>
+              <div class="time">2 小时前 · 来自 三亚</div>
+            </div>
+            <div class="follow">+ 关注</div>
+          </div>
+
+          <!-- 正文 -->
+          <div class="detail-body">
+            <h2>所谓的"现捞海鲜"原来全是套路，过秤少了快一半！</h2>
+            <p>下午跟朋友去逛第一市场，本来想着体验下当地特色，结果被宰得明明白白。</p>
+            <p>所谓"现捞"的螃蟹，过秤时眼睁睁看着 1.2 斤变成 2.1 斤，老板还振振有词说"这就是市场行情"。</p>
+            <p>建议大家如果非要去，自带电子秤，并且全程录像，被宰了可以打 12315 投诉。</p>
+            <div class="topic-row">
+              <span class="topic">#三亚海鲜刺客</span>
+              <span class="topic">#旅游避雷</span>
+            </div>
+          </div>
+
+          <!-- 地图卡片 -->
+          <div class="map-card">
+            <div class="map-thumb"></div>
+            <div class="map-info">
+              <div>
+                <div class="name">三亚第一市场海鲜大排档</div>
+                <div class="dist">📌 距你 1,243 km</div>
+              </div>
+              <div class="nav-btn">导航绕开</div>
+            </div>
+          </div>
+
+          <!-- 避雷 CTA -->
+          <div class="avoid-cta">
+            <div>
+              <div class="num">1,234</div>
+              <div class="label">⚡ 人已成功避雷</div>
+            </div>
+            <div class="btn">我也避了</div>
+          </div>
+
+          <!-- 评论 -->
+          <div class="comments">
+            <h3>💬 评论 (89)</h3>
+
+            <div class="comment">
+              <div class="avatar av-1">A</div>
+              <div class="body">
+                <div class="name-row"><b>愤怒的兔兔</b> · 1 小时前</div>
+                <div class="content">我上周也被宰了！同一家！老板还威胁我说"在我们地盘别废话"😡</div>
+                <div class="actions"><span>👍 234</span><span>💬 回复</span></div>
+              </div>
+            </div>
+
+            <div class="comment">
+              <div class="avatar av-2">B</div>
+              <div class="body">
+                <div class="name-row"><b>三亚本地人</b> · 38 分钟前</div>
+                <div class="content">本地人都不去第一市场的，去友谊路上的小店性价比高 100 倍...</div>
+                <div class="actions"><span>👍 567</span><span>💬 回复</span></div>
+              </div>
+            </div>
+
+            <div class="comment">
+              <div class="avatar av-3">C</div>
+              <div class="body">
+                <div class="name-row"><b>旅游小白</b> · 12 分钟前</div>
+                <div class="content">谢谢楼主！本来这周就要去的，看完直接换地方了 🙏</div>
+                <div class="actions"><span>👍 89</span><span>💬 回复</span></div>
+              </div>
+            </div>
+
+            <div class="comment">
+              <div class="avatar av-4">D</div>
+              <div class="body">
+                <div class="name-row"><b>正义的吃货</b> · 刚刚</div>
+                <div class="content">已经举报到当地市场监管局，建议大家一起举报</div>
+                <div class="actions"><span>👍 12</span><span>💬 回复</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 底部固定栏 -->
+        <div class="detail-bottom">
+          <div class="input">说点什么...</div>
+          <div class="ic liked"><span>❤</span><span>1.2k</span></div>
+          <div class="ic"><span>⭐</span><span>收藏</span></div>
+          <div class="ic"><span>↗</span><span>分享</span></div>
+        </div>
+        <div class="home-indicator"></div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============================================================
+       画板 ③ 发布页
+  ============================================================ -->
+  <div class="phone-wrap">
+    <div class="phone-label">⑤ 发布避雷帖</div>
+    <div class="phone">
+      <div class="screen">
+        <div class="dynamic-island"></div>
+        <div class="status-bar">
+          <span>9:41</span>
+          <div class="icons">
+            <span>●●●●</span><span>📶</span><span>🔋</span>
+          </div>
+        </div>
+
+        <div class="scroll-area">
+          <div class="pub-topbar">
+            <div class="x">✕</div>
+            <div class="title">曝光这个大雷！</div>
+            <div class="submit">发布</div>
+          </div>
+
+          <div class="pub-body">
+            <!-- 9 宫格上传 -->
+            <div class="uploader">
+              <div class="upload-item cover-seafood">
+                🦀
+                <div class="del">✕</div>
+              </div>
+              <div class="upload-item cover-bbq">
+                🍤
+                <div class="del">✕</div>
+              </div>
+              <div class="upload-item upload-empty">
+                <span>+</span>
+                <small>0/9</small>
+              </div>
+            </div>
+
+            <!-- 标题 -->
+            <div class="title-input" contenteditable="false" style="cursor:text;">用大字报告诉大家...</div>
+
+            <!-- 正文 -->
+            <div class="content-area placeholder">
+              详细吐槽下你的踩雷过程吧 ~（踩雷时间、过程、对方态度，最好附图证据）
+            </div>
+
+            <!-- 评分块 -->
+            <div class="rating-block">
+              <div class="lbl">
+                <span>💣 雷点几颗？</span>
+                <span class="hint">已选 4 颗 · 危险级</span>
+              </div>
+              <div class="bombs-pick">
+                <span>💣</span>
+                <span>💣</span>
+                <span>💣</span>
+                <span>💣</span>
+                <span class="off">💣</span>
+              </div>
+            </div>
+
+            <!-- 表单行 -->
+            <div class="form-row">
+              <span class="icon">📍</span>
+              <span class="lbl">地点/商家</span>
+              <span class="val">三亚第一市场某海鲜大排档</span>
+              <span class="arrow">›</span>
+            </div>
+
+            <div class="form-row">
+              <span class="icon">💸</span>
+              <span class="lbl">损失金额</span>
+              <span class="val"><span class="yen">¥</span> <span class="loss-val">3,800</span></span>
+              <span class="arrow">›</span>
+            </div>
+
+            <div class="form-row">
+              <span class="icon">📂</span>
+              <span class="lbl">所属分类</span>
+              <span class="val">🍜 美食</span>
+              <span class="arrow">›</span>
+            </div>
+
+            <!-- 话题 -->
+            <div class="topic-row-pub">
+              <div class="lbl">🏷 添加话题</div>
+              <div class="chips">
+                <span class="chip">#三亚海鲜刺客 <span class="x">✕</span></span>
+                <span class="chip">#旅游避雷 <span class="x">✕</span></span>
+                <span class="chip add">+ 添加</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+        <div class="home-indicator"></div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============================================================
+       画板 ④ 个人中心
+  ============================================================ -->
+  <div class="phone-wrap">
+    <div class="phone-label">⑥ 个人中心</div>
+    <div class="phone">
+      <div class="screen">
+        <div class="dynamic-island"></div>
+        <div class="status-bar on-dark">
+          <span>9:41</span>
+          <div class="icons">
+            <span>●●●●</span><span>📶</span><span>🔋</span>
+          </div>
+        </div>
+
+        <div class="scroll-area" style="padding-top: 0;">
+          <!-- Banner -->
+          <div class="profile-banner">
+            <div class="top-row">
+              <span></span>
+              <span class="settings">⚙</span>
+            </div>
+            <div class="user-row">
+              <div class="avatar-big">明</div>
+              <div>
+                <div class="nickname">小明被坑日记</div>
+                <div class="lv-badge">🛡 Lv.5 避雷侠</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 已救助勋章 -->
+          <div class="save-medal">
+            <div class="shield">🛡</div>
+            <div>
+              <div class="num">1,234</div>
+              <div class="label">人因你成功避雷</div>
+            </div>
+            <div class="arrow-right">›</div>
+          </div>
+
+          <!-- 数据条 -->
+          <div class="stats-row">
+            <div class="stat-cell">
+              <div class="v">23</div>
+              <div class="k">发布雷帖</div>
+            </div>
+            <div class="divider"></div>
+            <div class="stat-cell">
+              <div class="v">56</div>
+              <div class="k">收藏</div>
+            </div>
+            <div class="divider"></div>
+            <div class="stat-cell">
+              <div class="v">1.2k</div>
+              <div class="k">被赞</div>
+            </div>
+          </div>
+
+          <!-- Tab -->
+          <div class="profile-tabs">
+            <div class="pt active">我的雷帖</div>
+            <div class="pt">收藏</div>
+            <div class="pt">浏览历史</div>
+          </div>
+
+          <!-- 瀑布流 -->
+          <div class="waterfall" style="padding-bottom: 100px;">
+            <div class="thunder-card">
+              <div class="cover h200 cover-seafood">
+                <div class="cover-badge big">💣 5颗雷</div>
+                <div class="cover-icon">🦀</div>
+              </div>
+              <div class="card-body">
+                <div class="card-title">三亚海鲜大排档刺客！</div>
+                <div class="loss">💸 ¥3,800</div>
+                <div class="meta-row">
+                  <div class="loc">📍 三亚</div>
+                  <div class="avoid-pill">⚡ 2.3k</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="thunder-card">
+              <div class="cover h150 cover-hotel">
+                <div class="cover-badge">⚠ 热议</div>
+                <div class="cover-icon">🏨</div>
+              </div>
+              <div class="card-body">
+                <div class="card-title">五星酒店服务大跌眼镜</div>
+                <div class="loss">💸 ¥1,580</div>
+                <div class="meta-row">
+                  <div class="loc">📍 上海</div>
+                  <div class="avoid-pill">⚡ 891</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="thunder-card">
+              <div class="cover h180 cover-bbq">
+                <div class="cover-icon">🍢</div>
+              </div>
+              <div class="card-body">
+                <div class="card-title">看人下菜碟的烧烤店</div>
+                <div class="bomb-row"><span class="bombs">💣💣💣</span></div>
+                <div class="loss">💸 ¥520</div>
+                <div class="meta-row">
+                  <div class="loc">📍 青岛</div>
+                  <div class="avoid-pill">⚡ 432</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="thunder-card">
+              <div class="cover h220 cover-beauty">
+                <div class="cover-badge big">💣 4颗雷</div>
+                <div class="cover-icon">💄</div>
+              </div>
+              <div class="card-body">
+                <div class="card-title">免费体验背后的天价套路</div>
+                <div class="loss">💸 ¥6,800</div>
+                <div class="meta-row">
+                  <div class="loc">📍 杭州</div>
+                  <div class="avoid-pill">⚡ 1.5k</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TabBar -->
+        <div class="tabbar">
+          <div class="tab-item"><div class="ico">🏠</div>首页</div>
+          <div class="tab-publish">+</div>
+          <div class="tab-item active"><div class="ico">👤</div>我的</div>
+        </div>
+        <div class="home-indicator"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
